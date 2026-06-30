@@ -10,36 +10,28 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
 
+  // Web Client ID (client_type: 3) from google-services.json
+  static const String _serverClientId =
+      '76682411676-4kpv6okt2g29b02p65k8pnmsq3rkj975.apps.googleusercontent.com';
+
   AuthRemoteDataSourceImpl({FirebaseAuth? firebaseAuth})
       : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   @override
   Future<User> signInWithGoogle() async {
-    // google_sign_in v7: initialize with serverClientId from
-    // google-services.json (oauth_client -> client_id where client_type == 3)
-    // Then authenticate() returns a GoogleSignInAccount with .authentication
-    // which in v7 exposes idToken via serverAuthCode flow.
-    //
-    // For Firebase Auth the cleanest v7 approach is:
-    // 1. Call GoogleSignIn.instance.authenticate()
-    // 2. Use the returned GoogleSignInAccount.authentication
-    //    which gives GoogleSignInAuthentication with idToken
-    // 3. Pass idToken to GoogleAuthProvider.credential()
-    //    (accessToken is optional for Firebase — idToken alone is enough)
+    // google_sign_in v7: must call initialize() with serverClientId on Android
+    await GoogleSignIn.instance.initialize(
+      serverClientId: _serverClientId,
+    );
 
-    final googleSignIn = GoogleSignIn.instance;
+    final GoogleSignInAccount googleUser =
+        await GoogleSignIn.instance.authenticate();
 
-    // Trigger the Google authentication flow
-    final GoogleSignInAccount googleUser = await googleSignIn.authenticate();
-
-    // Get the authentication object — in v7 this is synchronous
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
 
-    // Build Firebase credential — idToken is sufficient, accessToken optional
     final OAuthCredential credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
-      // accessToken removed — not available directly in v7
     );
 
     final UserCredential userCredential =
