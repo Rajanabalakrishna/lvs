@@ -33,7 +33,6 @@ class WavyFooter extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Divider
             Row(
               children: [
                 Expanded(
@@ -61,10 +60,7 @@ class WavyFooter extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-
-            // Google Sign-In only
             SocialLoginButton(
               label: isLoading ? 'Signing in...' : 'Continue with Google',
               icon: Image.network(
@@ -76,10 +72,7 @@ class WavyFooter extends StatelessWidget {
               ),
               onPressed: isLoading ? () {} : onGoogleLogin,
             ),
-
             const SizedBox(height: 28),
-
-            // iOS home indicator
             Container(
               width: 128,
               height: 5,

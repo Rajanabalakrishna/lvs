@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lvt/feautres/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:lvt/feautres/auth/data/repositories/auth_repository_impl.dart';
@@ -30,62 +29,43 @@ final signOutUseCaseProvider = Provider<SignOutUseCase>(
   ),
 );
 
-// ── Auth Notifier (BLoC-style StateNotifier) ─────────────────
-class AuthNotifier extends StateNotifier<AuthState> {
-  final SignInWithGoogleUseCase _signInWithGoogle;
-  final SignOutUseCase _signOut;
-  final AuthRemoteDataSource _dataSource;
-
-  AuthNotifier({
-    required SignInWithGoogleUseCase signInWithGoogle,
-    required SignOutUseCase signOut,
-    required AuthRemoteDataSource dataSource,
-  })  : _signInWithGoogle = signInWithGoogle,
-        _signOut = signOut,
-        _dataSource = dataSource,
-        super(const AuthState.initial()) {
-    _checkCurrentUser();
-  }
-
-  void _checkCurrentUser() {
-    final firebaseUser = _dataSource.getCurrentUser();
+// ── Auth Notifier (Riverpod v3 — Notifier replaces StateNotifier) ──
+class AuthNotifier extends Notifier<AuthState> {
+  @override
+  AuthState build() {
+    final dataSource = ref.read(authRemoteDataSourceProvider);
+    final firebaseUser = dataSource.getCurrentUser();
     if (firebaseUser != null) {
-      final user = UserEntity(
+      return AuthAuthenticated(UserEntity(
         uid: firebaseUser.uid,
         email: firebaseUser.email ?? '',
         displayName: firebaseUser.displayName ?? '',
         photoUrl: firebaseUser.photoURL,
-      );
-      state = AuthState.authenticated(user);
-    } else {
-      state = const AuthState.unauthenticated();
+      ));
     }
+    return const AuthUnauthenticated();
   }
 
   Future<void> signInWithGoogle() async {
-    state = const AuthState.loading();
-    final result = await _signInWithGoogle();
+    state = const AuthLoading();
+    final useCase = ref.read(signInWithGoogleUseCaseProvider);
+    final result = await useCase();
     result.fold(
-      (error) => state = AuthState.error(error),
-      (user) => state = AuthState.authenticated(user),
+      (error) => state = AuthError(error),
+      (user) => state = AuthAuthenticated(user),
     );
   }
 
   Future<void> signOut() async {
-    state = const AuthState.loading();
-    final result = await _signOut();
+    state = const AuthLoading();
+    final useCase = ref.read(signOutUseCaseProvider);
+    final result = await useCase();
     result.fold(
-      (error) => state = AuthState.error(error),
-      (_) => state = const AuthState.unauthenticated(),
+      (error) => state = AuthError(error),
+      (_) => state = const AuthUnauthenticated(),
     );
   }
 }
 
 final authNotifierProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(
-    signInWithGoogle: ref.watch(signInWithGoogleUseCaseProvider),
-    signOut: ref.watch(signOutUseCaseProvider),
-    dataSource: ref.watch(authRemoteDataSourceProvider),
-  );
-});
+    NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);

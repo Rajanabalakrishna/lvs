@@ -21,29 +21,17 @@ class LoginScreen extends ConsumerWidget {
     final size = MediaQuery.of(context).size;
     final hPad = size.width < 400 ? 20.0 : 24.0;
 
-    final isLoading = authState.when(
-      initial: () => false,
-      loading: () => true,
-      authenticated: (_) => false,
-      unauthenticated: () => false,
-      error: (_) => false,
-    );
+    final isLoading = authState is AuthLoading;
 
     ref.listen<AuthState>(authNotifierProvider, (prev, next) {
-      next.when(
-        initial: () {},
-        loading: () {},
-        authenticated: (_) {},
-        unauthenticated: () {},
-        error: (msg) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(msg),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
-        },
-      );
+      if (next is AuthError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     });
 
     return Scaffold(

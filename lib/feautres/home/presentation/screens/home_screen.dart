@@ -11,8 +11,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       body: SafeArea(
@@ -27,7 +25,6 @@ class HomeScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Logo + greeting
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -50,36 +47,29 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-
-                    // User avatar + sign out
-                    Row(
-                      children: [
-                        // Avatar
-                        GestureDetector(
-                          onTap: () => _showProfileSheet(context, ref),
-                          child: Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(0xFFA1E300),
-                                width: 2,
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: user.photoUrl != null
-                                  ? Image.network(
-                                      user.photoUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
-                                          _defaultAvatar(),
-                                    )
-                                  : _defaultAvatar(),
-                            ),
+                    GestureDetector(
+                      onTap: () => _showProfileSheet(context, ref),
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFA1E300),
+                            width: 2,
                           ),
                         ),
-                      ],
+                        child: ClipOval(
+                          child: user.photoUrl != null
+                              ? Image.network(
+                                  user.photoUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _defaultAvatar(),
+                                )
+                              : _defaultAvatar(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -95,10 +85,7 @@ class HomeScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFFA1E300),
-                        Color(0xFF00A63E),
-                      ],
+                      colors: [Color(0xFFA1E300), Color(0xFF00A63E)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -127,9 +114,7 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(height: 14),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
+                            horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(30),
@@ -162,9 +147,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 14),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: GridView.count(
@@ -230,9 +213,7 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 14),
-
               SizedBox(
                 height: 160,
                 child: ListView.separated(
@@ -241,11 +222,13 @@ class HomeScreen extends ConsumerWidget {
                   itemCount: 5,
                   separatorBuilder: (_, __) => const SizedBox(width: 14),
                   itemBuilder: (context, index) {
-                    final items = [
-                      ('Gaming', Icons.sports_esports_rounded, Color(0xFF6366F1)),
+                    const items = [
+                      ('Gaming', Icons.sports_esports_rounded,
+                          Color(0xFF6366F1)),
                       ('Music', Icons.music_note_rounded, Color(0xFFF59E0B)),
                       ('Tech', Icons.computer_rounded, Color(0xFF06B6D4)),
-                      ('Sports', Icons.sports_soccer_rounded, Color(0xFF10B981)),
+                      ('Sports', Icons.sports_soccer_rounded,
+                          Color(0xFF10B981)),
                       ('Art', Icons.brush_rounded, Color(0xFFEC4899)),
                     ];
                     final item = items[index];
@@ -257,7 +240,6 @@ class HomeScreen extends ConsumerWidget {
                   },
                 ),
               ),
-
               const SizedBox(height: 32),
             ],
           ),
@@ -300,8 +282,9 @@ class HomeScreen extends ConsumerWidget {
             ),
             CircleAvatar(
               radius: 36,
-              backgroundImage:
-                  user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+              backgroundImage: user.photoUrl != null
+                  ? NetworkImage(user.photoUrl!)
+                  : null,
               backgroundColor: const Color(0xFF0F172A),
               child: user.photoUrl == null
                   ? const Icon(Icons.person_rounded,
@@ -359,7 +342,7 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ── Action Card Widget ────────────────────────────────────────
+// ── Action Card ──────────────────────────────────────────
 class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -380,10 +363,7 @@ class _ActionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.25),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.25), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,7 +392,7 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// ── Trending Card Widget ──────────────────────────────────────
+// ── Trending Card ──────────────────────────────────────────
 class _TrendingCard extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -432,10 +412,7 @@ class _TrendingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
