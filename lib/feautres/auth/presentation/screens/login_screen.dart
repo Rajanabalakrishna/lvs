@@ -1,62 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../notifier/auth_notifier.dart';
+import '../state/auth_state.dart';
 import '../widgets/alive_logo_widget.dart';
 import '../widgets/alive_text_field.dart';
 import '../widgets/alive_gradient_button.dart';
 import '../widgets/status_bar_widget.dart';
 import '../widgets/wavy_footer.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
+    final authNotifier = ref.read(authNotifierProvider.notifier);
 
-class _LoginScreenState extends State<LoginScreen> {
-  final GlobalKey _footerKey = GlobalKey();
-  double _footerHeight = 300; // safe fallback
-
-  @override
-  void initState() {
-    super.initState();
-    // Measure footer height after first frame renders
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _footerKey.currentContext;
-      if (ctx != null) {
-        final box = ctx.findRenderObject() as RenderBox;
-        setState(() => _footerHeight = box.size.height);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-    // Responsive horizontal padding — tighter on small screens, wider on tablets
     final hPad = size.width < 400 ? 20.0 : 24.0;
+
+    final isLoading = authState.when(
+      initial: () => false,
+      loading: () => true,
+      authenticated: (_) => false,
+      unauthenticated: () => false,
+      error: (_) => false,
+    );
+
+    ref.listen<AuthState>(authNotifierProvider, (prev, next) {
+      next.when(
+        initial: () {},
+        loading: () {},
+        authenticated: (_) {},
+        unauthenticated: () {},
+        error: (msg) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        },
+      );
+    });
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor:
-      isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFFFF),
+          isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFFFF),
       body: Stack(
         children: [
-          // ── Scrollable content ────────────────────────
           SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Padding(
-              // Extra bottom padding = footer height so content is never hidden
-              padding: EdgeInsets.only(bottom: _footerHeight),
+              padding: const EdgeInsets.only(bottom: 300),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Status bar
                   const StatusBarWidget(),
-
-                  // iOS notch
                   Center(
                     child: Container(
                       width: 120,
@@ -70,15 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
                   SizedBox(height: size.height * 0.035),
-
-                  // App logo
                   AliveLogoWidget(size: size.width < 400 ? 70 : 80),
-
                   SizedBox(height: size.height * 0.028),
-
-                  // Welcome text
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: hPad),
                     child: Column(
@@ -108,40 +106,35 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-
                   SizedBox(height: size.height * 0.04),
-
-                  // ── Form ──────────────────────────────
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: hPad),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Email / Phone
-                        const AliveTextField(
+                        AliveTextField(
                           label: 'Email ID or Phone Number',
                           placeholder: 'Enter Registered Email or Phone No.',
                           keyboardType: TextInputType.emailAddress,
                         ),
-
-                        const SizedBox(height: 20),
-
-                        // Password
-                        const AliveTextField(
+                        SizedBox(height: 20),
+                        AliveTextField(
                           label: 'Password',
                           placeholder: 'Enter your password',
                           isPassword: true,
                         ),
-
-                        const SizedBox(height: 10),
-
-                        // Forgot password
+                        SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
+                    child: Column(
+                      children: [
                         Align(
                           alignment: Alignment.centerRight,
                           child: GestureDetector(
-                            onTap: () {
-                              // TODO: Navigate to forgot password
-                            },
+                            onTap: () {},
                             child: Text(
                               'Forgot Password?',
                               style: GoogleFonts.plusJakartaSans(
@@ -152,15 +145,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 28),
-
-                        // Login button
                         AliveGradientButton(
                           label: 'Login',
-                          onPressed: () {
-                            // TODO: Handle login
-                          },
+                          onPressed: () {},
                         ),
                       ],
                     ),
@@ -170,21 +158,27 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // ── Sticky wavy footer ────────────────────────
+          // Loading overlay
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.35),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(Color(0xFF16A34A)),
+                ),
+              ),
+            ),
+
+          // Sticky wavy footer — Google Sign-In only
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             child: WavyFooter(
-              key: _footerKey,
-              onGoogleLogin: () {
-                // TODO: Google Sign-In
-              },
-              onFacebookLogin: () {
-                // TODO: Facebook Sign-In
-              },
-              onSignUp: () {
-                // TODO: Navigate to Sign Up
+              isLoading: isLoading,
+              onGoogleLogin: () async {
+                await authNotifier.signInWithGoogle();
               },
             ),
           ),
