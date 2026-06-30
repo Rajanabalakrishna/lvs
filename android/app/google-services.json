@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "76682411676",
+    "project_id": "lvmmm-68263",
+    "storage_bucket": "lvmmm-68263.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:76682411676:android:26e4de54c3ab471a7f3759",
+        "android_client_info": {
+          "package_name": "com.example.lvt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACXk_Leo_Wm2Ssy3BY1b2wiw5WDqzbJY8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
