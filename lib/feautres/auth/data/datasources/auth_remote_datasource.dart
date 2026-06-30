@@ -10,24 +10,32 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
 
+  static const String _serverClientId =
+      '76682411676-4kpv6okt2g29b02p65k8pnmsq3rkj975.apps.googleusercontent.com';
+
   AuthRemoteDataSourceImpl({FirebaseAuth? firebaseAuth})
       : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   @override
   Future<User> signInWithGoogle() async {
     await GoogleSignIn.instance.initialize(
-      serverClientId: '76682411676-4kpv6okt2g29b02p65k8pnmsq3rkj975.apps.googleusercontent.com',
-    );
-    final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
-
-    final googleAuth = googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      idToken: googleAuth.idToken,  // idToken alone is enough for Firebase
+      serverClientId: _serverClientId,
     );
 
-    final userCredential =
-        await _firebaseAuth.signInWithCredential(credential);
-    final user = userCredential.user;
+    final GoogleSignInAccount googleUser =
+    await GoogleSignIn.instance.authenticate();
+
+    final GoogleSignInAuthentication googleAuth =
+    await googleUser.authentication;
+
+    final OAuthCredential credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+    );
+
+    final UserCredential userCredential =
+    await _firebaseAuth.signInWithCredential(credential);
+
+    final User? user = userCredential.user;
     if (user == null) throw Exception('Firebase user is null after sign-in');
     return user;
   }
