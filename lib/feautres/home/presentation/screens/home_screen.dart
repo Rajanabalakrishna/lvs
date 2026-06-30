@@ -1,450 +1,503 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:lvt/feautres/auth/domain/entities/user_entity.dart';
-import 'package:lvt/feautres/auth/presentation/notifier/auth_notifier.dart';
+import '../providers/post_provider.dart';
+import '../widgets/stream_card_widget.dart';
 
-class HomeScreen extends ConsumerWidget {
-  final UserEntity user;
-
-  const HomeScreen({super.key, required this.user});
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  int _selectedTab = 0;
+  int _selectedFilter = 0;
+  int _selectedNavItem = 0;
+
+  static const _tabs = ['Stream', 'Hot', 'Follow'];
+  static const _filters = [
+    {'label': 'Global', 'flag': null, 'icon': 'globe'},
+    {'label': 'India', 'flag': '🇮🇳', 'icon': null},
+    {'label': 'Philippines', 'flag': '🇵🇭', 'icon': null},
+    {'label': 'Brazil', 'flag': '🇧🇷', 'icon': null},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final postsAsync = ref.watch(postsProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Top App Bar ──────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'LVS',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFFA1E300),
-                            letterSpacing: 2,
-                          ),
-                        ),
-                        Text(
-                          'Good to see you! 🎥',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF94A3B8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () => _showProfileSheet(context, ref),
-                      child: Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFA1E300),
-                            width: 2,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: user.photoUrl != null
-                              ? Image.network(
-                                  user.photoUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      _defaultAvatar(),
-                                )
-                              : _defaultAvatar(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ── Welcome Banner ───────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFA1E300), Color(0xFF00A63E)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hello, ${user.displayName.isNotEmpty ? user.displayName.split(' ').first : 'Streamer'}! 👋',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        user.email,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withOpacity(0.85),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Text(
-                          '🟢  Ready to Go Live',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // ── Quick Actions ────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Quick Actions',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: 1.35,
-                  children: const [
-                    _ActionCard(
-                      icon: Icons.videocam_rounded,
-                      label: 'Go Live',
-                      subtitle: 'Start streaming',
-                      color: Color(0xFFA1E300),
-                    ),
-                    _ActionCard(
-                      icon: Icons.play_circle_fill_rounded,
-                      label: 'Watch Live',
-                      subtitle: 'Browse streams',
-                      color: Color(0xFF6366F1),
-                    ),
-                    _ActionCard(
-                      icon: Icons.people_alt_rounded,
-                      label: 'Following',
-                      subtitle: 'Your creators',
-                      color: Color(0xFFF59E0B),
-                    ),
-                    _ActionCard(
-                      icon: Icons.bar_chart_rounded,
-                      label: 'Analytics',
-                      subtitle: 'View stats',
-                      color: Color(0xFFEC4899),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // ── Trending Section ─────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Trending Now 🔥',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      'See all',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFFA1E300),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: 160,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: 5,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    const items = [
-                      ('Gaming', Icons.sports_esports_rounded,
-                          Color(0xFF6366F1)),
-                      ('Music', Icons.music_note_rounded, Color(0xFFF59E0B)),
-                      ('Tech', Icons.computer_rounded, Color(0xFF06B6D4)),
-                      ('Sports', Icons.sports_soccer_rounded,
-                          Color(0xFF10B981)),
-                      ('Art', Icons.brush_rounded, Color(0xFFEC4899)),
-                    ];
-                    final item = items[index];
-                    return _TrendingCard(
-                      label: item.$1,
-                      icon: item.$2,
-                      color: item.$3,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _defaultAvatar() {
-    return Container(
-      color: const Color(0xFF1E293B),
-      child: const Icon(
-        Icons.person_rounded,
-        color: Color(0xFF94A3B8),
-        size: 24,
-      ),
-    );
-  }
-
-  void _showProfileSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
+        bottom: false,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF475569),
-                borderRadius: BorderRadius.circular(2),
+            _buildHeader(),
+            Expanded(
+              child: postsAsync.when(
+                loading: () => _buildLoadingGrid(),
+                error: (err, _) => _buildError(err),
+                data: (posts) => _buildGrid(posts),
               ),
             ),
-            CircleAvatar(
-              radius: 36,
-              backgroundImage: user.photoUrl != null
-                  ? NetworkImage(user.photoUrl!)
-                  : null,
-              backgroundColor: const Color(0xFF0F172A),
-              child: user.photoUrl == null
-                  ? const Icon(Icons.person_rounded,
-                      size: 36, color: Color(0xFF94A3B8))
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              user.displayName,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              user.email,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                color: const Color(0xFF94A3B8),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ref.read(authNotifierProvider.notifier).signOut();
-                },
-                icon: const Icon(Icons.logout_rounded),
-                label: Text(
-                  'Sign Out',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
-}
 
-// ── Action Card ──────────────────────────────────────────
-class _ActionCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final Color color;
+  // ─── Header ────────────────────────────────────────────────────────────────
 
-  const _ActionCard({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.25), width: 1),
-      ),
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 28),
+          _buildTopRow(),
+          const SizedBox(height: 20),
+          _buildTabs(),
+          const SizedBox(height: 16),
+          _buildFilterChips(),
           const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Logo
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFA3E635),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Text(
+              'A',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
+        ),
+        Row(
+          children: [
+            // Notification
+            Stack(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    shape: BoxShape.circle,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.notifications_outlined,
+                    color: Color(0xFF64748B),
+                    size: 22,
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        '3',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 10),
+            // Shopping bag
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: Color(0xFFA3E635),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.shopping_bag_outlined,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabs() {
+    return Row(
+      children: List.generate(_tabs.length, (i) {
+        final isActive = _selectedTab == i;
+        return GestureDetector(
+          onTap: () => setState(() => _selectedTab = i),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 28),
+            child: Column(
+              children: [
+                Text(
+                  _tabs[i],
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight:
+                        isActive ? FontWeight.bold : FontWeight.w500,
+                    color: isActive
+                        ? const Color(0xFFA3E635)
+                        : const Color(0xFF9CA3AF),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 4,
+                  width: isActive ? 32 : 0,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFA3E635),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _filters.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final f = _filters[i];
+          final isActive = _selectedFilter == i;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedFilter = i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFFA3E635).withOpacity(0.15)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isActive
+                      ? const Color(0xFFA3E635)
+                      : const Color(0xFFE5E7EB),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black08,
+                    blurRadius: 3,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (f['icon'] == 'globe')
+                    const Icon(Icons.public,
+                        color: Color(0xFF3B82F6), size: 16)
+                  else
+                    Text(f['flag'] as String,
+                        style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 5),
+                  Text(
+                    f['label'] as String,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isActive
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ─── Grid ──────────────────────────────────────────────────────────────────
+
+  Widget _buildGrid(posts) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+      child: ListView.builder(
+        physics: const BouncingScrollPhysics(),
+        itemCount: (posts.length / 2).ceil(),
+        itemBuilder: (context, rowIndex) {
+          final leftIndex = rowIndex * 2;
+          final rightIndex = leftIndex + 1;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: StreamCardWidget(post: posts[leftIndex]),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: rightIndex < posts.length
+                      ? StreamCardWidget(post: posts[rightIndex])
+                      : const SizedBox(),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingGrid() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+          childAspectRatio: 3.4 / 4.5,
+        ),
+        itemCount: 6,
+        itemBuilder: (_, __) => ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5E7EB),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFA3E635),
+                strokeWidth: 2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(Object err) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.wifi_off_rounded,
+              size: 48, color: Color(0xFF94A3B8)),
+          const SizedBox(height: 12),
           Text(
-            subtitle,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              color: const Color(0xFF94A3B8),
+            'Failed to load streams',
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF475569)),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            err.toString(),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => ref.invalidate(postsProvider),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFA3E635),
+              foregroundColor: Colors.black,
             ),
           ),
         ],
       ),
     );
   }
-}
 
-// ── Trending Card ──────────────────────────────────────────
-class _TrendingCard extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
+  // ─── Bottom Nav ────────────────────────────────────────────────────────────
 
-  const _TrendingCard({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 120,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              shape: BoxShape.circle,
+  Widget _buildBottomNav() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: 88,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFD9F99D), Color(0xFFA3E635)],
             ),
-            child: Icon(icon, color: color, size: 26),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(40),
+              topRight: Radius.circular(40),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'LIVE',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: color,
-              letterSpacing: 1,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // Go Live elevated button
+              Positioned(
+                top: -32,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: const Color(0xFFA3E635), width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.sensors,
+                            color: Color(0xFFA3E635),
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Nav items row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _navItem(Icons.home_rounded, 'Home', 0),
+                    _navItem(Icons.celebration_outlined, 'Party', 1),
+                    // center spacer for go-live button
+                    const SizedBox(width: 72),
+                    _navItem(Icons.send_outlined, 'Chats', 3),
+                    _navItem(Icons.person_outline_rounded, 'Profile', 4),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Home indicator bar
+        Container(
+          height: 24,
+          color: const Color(0xFFA3E635),
+          child: Center(
+            child: Container(
+              width: 120,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _navItem(IconData icon, String label, int index) {
+    final isActive = _selectedNavItem == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedNavItem = index),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: isActive ? 1.0 : 0.75,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
